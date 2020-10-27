@@ -62,44 +62,44 @@ namespace _1labMethod
         private void correl_Click(object sender, EventArgs e)
         {
             //поиск вектора средних
-            double[] xVect =new double [columnCount - 1];
+            double[] xVect =new double [columnCount];
             double auxiliary;
-            for (int column = 1; column < columnCount; column++)
+            for (int column = 0; column < columnCount; column++)
             {
                 auxiliary = 0;
                 for (int row = 0; row < rowCount; row++)
                 {
                     auxiliary += matrix[row, column];
                 }
-                xVect[column - 1] = auxiliary / rowCount;//нужно ли -1 вроде да 
+                xVect[column] = auxiliary / rowCount;//нужно ли -1 вроде да 
             }
 
             //среднеквадратичные отклонения 
-            double[] sVect = new double[columnCount - 1];
-            for (int column=1;column < columnCount; column++)
+            double[] sVect = new double[columnCount];
+            for (int column=0;column < columnCount; column++)
             {
                 auxiliary = 0;
                 for (int row = 0; row < rowCount; row++)
                 {
-                    auxiliary += Math.Pow((matrix[row, column] - xVect[column-1]), 2);
+                    auxiliary += Math.Pow((matrix[row, column] - xVect[column]), 2);
                 }
-                sVect[column - 1] = Math.Sqrt(auxiliary / rowCount);
+                sVect[column ] = Math.Sqrt(auxiliary / rowCount);
             }
 
             //матрица парных коэффициентов корреляции
-            double[,] rMatrix = new double[columnCount - 1,columnCount - 1];
-            for (int colomn1 = 1; colomn1 < columnCount; colomn1++)
+            double[,] rMatrix = new double[columnCount,columnCount];
+            for (int colomn1 = 0; colomn1 < columnCount; colomn1++)
             {
-                rMatrix[colomn1-1, colomn1-1] = 1;
+                rMatrix[colomn1, colomn1] = 1;
                 for (int colomn2 = colomn1 + 1; colomn2 < columnCount; colomn2++)
                 {
                     auxiliary = 0;
                     for (int row = 0; row < rowCount; row++)
                     {
-                        auxiliary += (matrix[row, colomn1] - xVect[colomn1 - 1]) * (matrix[row, colomn2] - xVect[colomn2 - 1]);
+                        auxiliary += (matrix[row, colomn1] - xVect[colomn1 ]) * (matrix[row, colomn2] - xVect[colomn2 ]);
                     }
-                    rMatrix[colomn1 - 1, colomn2 - 1] = auxiliary / (rowCount * sVect[colomn1 - 1] * sVect[colomn2 - 1]);
-                    rMatrix[colomn2 - 1, colomn1 - 1] = rMatrix[colomn1 - 1, colomn2 - 1];
+                    rMatrix[colomn1, colomn2 ] = auxiliary / (rowCount * sVect[colomn1] * sVect[colomn2]);
+                    rMatrix[colomn2, colomn1 ] = rMatrix[colomn1 , colomn2 ];
                 }
             }
 
@@ -152,6 +152,28 @@ namespace _1labMethod
                 }
             }
 
+            //поверка значимости , Фишера -Иейтса
+            //for n=8: 0.754
+            //for n=53; 0.270 
+
+            //  интервальная оценка y=0.95
+            //int sizeT = (sizeM * (sizeM - 1) / 2);
+            double[,] rInterval = new double[sizeT,2];
+            double sigma;
+            double tZ;
+            for (int x = 0, k = 0; x < sizeM; x++)
+            {
+                for (int y = x + 1; y < sizeM; k++, y++)
+                {
+                    sigma = 0.5 * (Math.Log(1 + partialCorrMatrix[x, y])
+                        - Math.Log(1 - partialCorrMatrix[x, y]));
+                    tZ = 1.96 * Math.Sqrt(1 / (rowCount - 4));
+                    rInterval[k, 0] = (Math.Exp(2 * (sigma - tZ)) - 1)
+                        / (Math.Exp(2 * (sigma - tZ)) - 1);
+                    rInterval[k, 1] = (Math.Exp(2 * (sigma + tZ)) - 1)
+                        / (Math.Exp(2 * (sigma + tZ)) - 1);
+                }
+            }
 
         }
 
