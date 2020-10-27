@@ -118,58 +118,93 @@ namespace _1labMethod
             //    }
             //}
 
-            
+            //расчет матрицы частных коэффициентов
+            double[,] alfComplementMatrix =  algComplementMatrix(rMatrix);
+
+            //частные коэффициенты корреляции
+            int sizeM = alfComplementMatrix.GetLength(0);
+            double[,] partialCorrMatrix = new double[sizeM, sizeM];
+            for (int x=0 ; x < sizeM; x++)
+            {
+                for( int y = x; y < sizeM; y++)
+                {
+                    partialCorrMatrix[x, y] = (-1) * alfComplementMatrix[x, y] / Math.Sqrt(alfComplementMatrix[x, x] * alfComplementMatrix[y, y]);
+                    if (y != x)
+                    {
+                        partialCorrMatrix[y, x] = partialCorrMatrix[x, y];
+                    }
+                }
+            }
+
+            //проверка значимости частных коэффициентов корреляции
+            //a=0,05; v=n-l-2; l=1
+            // for n=8; 2.571
+            //for n=53; 2.0085591
+            //поверка значимости 
+            //оценки 
+            int sizeT = (sizeM * (sizeM - 1) / 2);
+            double[] tObservedValue = new double[sizeT];
+            for(int x=0,k=0; x < sizeM; x++)
+            {
+                for(int y = x + 1; y < sizeM; k++,y++)
+                {
+                    tObservedValue[k] = (partialCorrMatrix[x, y] * Math.Sqrt(rowCount - 3) )/ Math.Sqrt(1 - Math.Pow(partialCorrMatrix[x, y], 2));
+                }
+            }
+
 
         }
 
+        //матрица алгебраических дополнений  
         // матрица частных коэффициентов корреляции
-        private double [,] partiaCorrMatrix(double [,] matrix)
+        private double [,] algComplementMatrix(double [,] matrix)
         {
-            double[,] partialcorrMatrix = new double[columnCount, columnCount];
-            for (int x = 0; x < rowCount; x++)
+            int size = matrix.GetLength(1);
+            double[,] algComplMatrix = new double[size, size];
+            for (int x = 0; x < size; x++)
             {
-                for (int y = 0; y < columnCount; y++)
+                for (int y = x; y < size; y++)
                 {
-
+                    algComplMatrix[x, y] = Math.Pow((-1), x + y) * determinant(minorXYmatrix(matrix, x, y));
+                    if (y != x)
+                    {
+                        algComplMatrix[y, x] = algComplMatrix[x, y];
+                    }
                 }
             }
+            return algComplMatrix;
         }
         
 
 
-    private double minorXY(double [,] matrix, int x, int y)
+    private double [,] minorXYmatrix(double [,] matrix, int x, int y)
         {
-            int size = matrix.GetLength(1);
-            double[,] minor = new double[size - 1, size - 1];
-            for (int row = 0; row < size; row++)
+            int size = matrix.GetLength(1) - 1;
+            double[,] minor = new double[size, size];
+            for (int row = 0, rowMatrix = 0; row < size; rowMatrix++, row++)
             {
                 if (row == x)
                 {
-                    continue;
+                    rowMatrix++;
                 }
-                else
-                {
-                    for (int column = 0; column < size; column++)
+
+                for (int column = 0, columnMatrix = 0; column < size; columnMatrix++, column++)
+                { 
+                    if (column == y)
                     {
-                        if (column == y)
-                        {
-                            continue;
-                        }
-                        else
-                        {
-                            minor[row, column] = matrix[row, column];
-                        }
+                        columnMatrix++;
                     }
+                minor[row, column] = matrix[rowMatrix, columnMatrix];
                 }
             }
-            return determinant(minor);
+            return minor;
         }
 
-        //алгебраическое дополнение
-        private double algCompl(double[,] matrix, int x, int y)
-        {
-            return Math.Pow((-1), x + y) * minorXY(matrix, x, y);
-        }
+        ////алгебраическое дополнение
+        //private double algCompl(double[,] matrix, int x, int y)
+        //{
+        //    return Math.Pow((-1), x + y) * minorXYmatrix(matrix, x, y);
+        //}
 
 
         private double determinant(double [,] matrix)
@@ -185,7 +220,7 @@ namespace _1labMethod
             {
                 for(int colomn = 0; colomn < countCnt; colomn++)
                 {
-                    determ += matrix[0, colomn] * Math.Pow((-1), colomn) * minorXY(matrix, 0, colomn); 
+                    determ += matrix[0, colomn] * Math.Pow((-1), colomn) *determinant( minorXYmatrix(matrix, 0, colomn)); 
                 }
                 return determ;
             }
