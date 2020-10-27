@@ -167,14 +167,35 @@ namespace _1labMethod
                 {
                     sigma = 0.5 * (Math.Log(1 + partialCorrMatrix[x, y])
                         - Math.Log(1 - partialCorrMatrix[x, y]));
-                    tZ = 1.96 * Math.Sqrt(1 / (rowCount - 4));
-                    rInterval[k, 0] = (Math.Exp(2 * (sigma - tZ)) - 1)
-                        / (Math.Exp(2 * (sigma - tZ)) - 1);
-                    rInterval[k, 1] = (Math.Exp(2 * (sigma + tZ)) - 1)
-                        / (Math.Exp(2 * (sigma + tZ)) - 1);
+                    tZ = 1.96 * (Math.Sqrt(1.0 / (rowCount - 4)));
+                    rInterval[k, 0] = (Math.Exp(2.0 * (sigma - tZ)) - 1)
+                        / (Math.Exp(2.0 * (sigma - tZ)) + 1);
+                    rInterval[k, 1] = (Math.Exp(2.0 * (sigma + tZ)) - 1)
+                        / (Math.Exp(2.0 * (sigma + tZ)) + 1);
                 }
             }
 
+            //множественный коэффициент корреляции
+            double[] rMulti = new double[columnCount];
+            double determin=0;
+            for (int x = 0; x < columnCount; x++)
+            {
+                determin += rMatrix[0, x] * alfComplementMatrix[0, x];
+            }
+            
+            for (int x = 0; x < columnCount; x++)
+            {
+                rMulti[x] = Math.Sqrt(1.0 - determin / alfComplementMatrix[x, x]);
+            }
+
+            //Fкрит(0.05;2;5)=5.79
+            //Fкрит(0.05;5;47)=3.20
+            double[] fRMulti = new double[columnCount];
+            double f =( double)(rowCount - columnCount) / (columnCount - 1);
+            for (int x = 0; x < columnCount; x++)
+            {
+                fRMulti[x] = f * Math.Pow(rMulti[x], 2) / (1.0 - Math.Pow(rMulti[x], 2));
+            }
         }
 
         //матрица алгебраических дополнений  
