@@ -71,7 +71,7 @@ namespace _1labMethod
                 {
                     auxiliary += matrix[row, column];
                 }
-                xVect[column] = auxiliary / rowCount;//нужно ли -1 вроде да 
+                xVect[column] = auxiliary / rowCount;
             }
 
             //среднеквадратичные отклонения 
@@ -96,7 +96,8 @@ namespace _1labMethod
                     auxiliary = 0;
                     for (int row = 0; row < rowCount; row++)
                     {
-                        auxiliary += (matrix[row, colomn1] - xVect[colomn1 ]) * (matrix[row, colomn2] - xVect[colomn2 ]);
+                        auxiliary += (matrix[row, colomn1] - xVect[colomn1 ])
+                            * (matrix[row, colomn2] - xVect[colomn2 ]);
                     }
                     rMatrix[colomn1, colomn2 ] = auxiliary / (rowCount * sVect[colomn1] * sVect[colomn2]);
                     rMatrix[colomn2, colomn1 ] = rMatrix[colomn1 , colomn2 ];
@@ -118,7 +119,7 @@ namespace _1labMethod
             //    }
             //}
 
-            //расчет матрицы частных коэффициентов
+            //расчет матрицы алгебраических дополнений по матрице R
             double[,] alfComplementMatrix =  algComplementMatrix(rMatrix);
 
             //частные коэффициенты корреляции
@@ -128,7 +129,8 @@ namespace _1labMethod
             {
                 for( int y = x; y < sizeM; y++)
                 {
-                    partialCorrMatrix[x, y] = (-1) * alfComplementMatrix[x, y] / Math.Sqrt(alfComplementMatrix[x, x] * alfComplementMatrix[y, y]);
+                    partialCorrMatrix[x, y] = (-1) * alfComplementMatrix[x, y] 
+                        / Math.Sqrt(alfComplementMatrix[x, x] * alfComplementMatrix[y, y]);
                     if (y != x)
                     {
                         partialCorrMatrix[y, x] = partialCorrMatrix[x, y];
@@ -148,7 +150,8 @@ namespace _1labMethod
             {
                 for(int y = x + 1; y < sizeM; k++,y++)
                 {
-                    tObservedValue[k] = (partialCorrMatrix[x, y] * Math.Sqrt(rowCount - 3) )/ Math.Sqrt(1 - Math.Pow(partialCorrMatrix[x, y], 2));
+                    tObservedValue[k] = (partialCorrMatrix[x, y] * Math.Sqrt(rowCount - 3) )
+                        / Math.Sqrt(1 - Math.Pow(partialCorrMatrix[x, y], 2));
                 }
             }
 
@@ -218,8 +221,6 @@ namespace _1labMethod
             return algComplMatrix;
         }
         
-
-
     private double [,] minorXYmatrix(double [,] matrix, int x, int y)
         {
             int size = matrix.GetLength(1) - 1;
@@ -271,6 +272,48 @@ namespace _1labMethod
             {
                 determ = (matrix[0, 0] * matrix[1, 1]) - (matrix[0, 1] * matrix[1, 0]);
                 return determ;
+            }
+        }
+
+        private void regression_Click(object sender, EventArgs e)
+        {
+            double[,] a, b;
+            //a = new double[,] { { 3}, { 2},{ 0},{ -1} };
+            //b = new double[,] { { -1, 1, 0, 2 } };
+            a = new double[,] { { 2, 4, 0 }, { -2, 1, 3 }, { -1, 0, 1 } };
+            b = new double[,] { { 1 }, { 2 }, { -1 } };
+            multiplicationMatrix(a, b);
+        }
+
+        private double [,] multiplicationMatrix(double [,] aMatrix, double [,] bMatrix)
+        {
+            int m, n, p;
+            if (aMatrix.GetLength(1) == bMatrix.GetLength(0))
+            {
+                m = aMatrix.GetLength(0);
+                n = bMatrix.GetLength(1);
+                p = bMatrix.GetLength(0);
+                double[,] cMatrix = new double[m, n];
+                double helper;
+                for (int x = 0; x < m; x++)
+                {
+                    for (int y = 0; y < n; y++)
+                    {
+                        helper = 0;
+                        for (int i = 0; i < p; i++)
+                        {
+                            helper += aMatrix[x, i] * bMatrix[i, y];
+                        }
+                        cMatrix[x, y] = helper;
+                    }
+                }
+                return cMatrix;
+            }
+            else
+            {
+                MessageBox.Show("Матрица не является квадратной");
+                double[,] errorMatrix = new double[,] { { -1 }, { -1 } };
+                return errorMatrix;
             }
         }
         private void загрузитьToolStripMenuItem_Click(object sender, EventArgs e)
