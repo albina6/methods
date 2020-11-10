@@ -249,7 +249,41 @@ namespace _1labMethod
         //{
         //    return Math.Pow((-1), x + y) * minorXYmatrix(matrix, x, y);
         //}
-
+        private double determinant(double[,] matrixForDet, double [,] algebrComplMatrix)
+        {
+            double det = 0;
+            if (matrixForDet.GetLength(0) == matrixForDet.GetLength(1))
+            {
+                if (algebrComplMatrix.GetLength(0) == algebrComplMatrix.GetLength(1))
+                {
+                    if (algebrComplMatrix.GetLength(0) == matrixForDet.GetLength(0))
+                    {
+                        int size = algebrComplMatrix.GetLength(0);
+                        for (int y = 0; y < size; y++)
+                        {
+                            det += matrixForDet[0, y] * algebrComplMatrix[0, y];
+                        }
+                        return det;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Матрицы не одинаковой размерности {determinant} ");
+                        return -1;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Матрица algebrComplMatrix не является квадратной {determinant}");
+                    return -1;
+                }
+            }
+            else
+            {
+                MessageBox.Show("Матрица X не является квадратной {determinant}");
+                return -1;
+            }
+            
+        }
 
         private double determinant(double [,] matrix)
         {
@@ -257,7 +291,7 @@ namespace _1labMethod
             double determ = 0;
             if (matrix.GetLength(0) !=countCnt)
             {
-                MessageBox.Show("Матрица не является квадратной");
+                MessageBox.Show("Матрица не является квадратной {determinant}");
                 return -1;
             }
             else if (countCnt > 2)
@@ -277,14 +311,177 @@ namespace _1labMethod
 
         private void regression_Click(object sender, EventArgs e)
         {
-            double[,] a, b;
-            //a = new double[,] { { 3}, { 2},{ 0},{ -1} };
-            //b = new double[,] { { -1, 1, 0, 2 } };
-            a = new double[,] { { 2, 4, 0 }, { -2, 1, 3 }, { -1, 0, 1 } };
-            b = new double[,] { { 1 }, { 2 }, { -1 } };
-            multiplicationMatrix(a, b);
+            double[,] yMatrix, xMatrix;
+            yMatrix = new double[rowCount, 1];
+            //xMatrix = new double[rowCount,columnCount];
+            xMatrix=(double[,]) matrix.Clone();
+            for (int i = 0; i < rowCount; i++)
+            {
+                yMatrix[i, 0] = matrix[i, 0];
+                xMatrix[i, 0] = 1;
+            }
+
+            double[,] xTransposed = transposedMatrix(xMatrix);
+            double[,] xTx = multiplicationMatrix(xTransposed, xMatrix);
+            double[,] algCompl = algComplementMatrix(xTx);
+            double[,] inverseMatrix_xTx = multiplicationMatrix
+                            ((1.0 / determinant(xTx, algCompl)), algCompl);
+            double[,] bMatrix = multiplicationMatrix(inverseMatrix_xTx,
+                            multiplicationMatrix(xTransposed, yMatrix));
+
+            //линейное уравнение регрессии
+            double [,] yCalculatedLin = calculateY (bMatrix, xMatrix);
+            check(yMatrix, yCalculatedLin, xMatrix, bMatrix, inverseMatrix_xTx);
+            //про остаток 
+            //double[,] qError = sumMatrix(yMatrix, (multiplicationMatrix(-1, yCalculatedLin)));
+            
+
+
+            //double[,] xTransposed = transposedMatrix(xMatrix);
+
+            //double[,] xTransposed = transposedMatrix(xMatrix);
+            //double[,] xTx = multiplicationMatrix(xTransposed, xMatrix);
+
+            // double [,]a  = new double[,] { { 3}, { 2},{ 0},{ -1} };
+            // //b = new double[,] { { -1, 1, 0, 2 } };
+            // //a = new double[,] { { 2, 4, 0 }, { -2, 1, 3 }, { -1, 0, 1 } };
+            // //b = new double[,] { { 1 }, { 2 }, { -1 } };
+
+            //double [,] b = transposedMatrix(a);
         }
 
+        private double[,] calculateY(double [,] bMatrix,double [,] xMatrix)
+        {
+            if ((bMatrix.GetLength(0) == xMatrix.GetLength(1))&&(bMatrix.GetLength(1))==1)
+            {
+                int xSize = xMatrix.GetLength(0);
+                int ySize = xMatrix.GetLength(1);
+                double[,] yCalculated = new double[xSize, 1];
+
+                for (int x = 0; x < xSize; x++)
+                {
+                    double auxiliaryV = 0.0;
+                    for(int y = 0; y < ySize; y++)
+                    {
+                        auxiliaryV += bMatrix[y, 0] * xMatrix[x, y];
+                    }
+                    yCalculated[x, 0] = auxiliaryV;
+                }
+                return yCalculated;
+            }
+            else
+            {
+                MessageBox.Show("Матрицы не удовлетворяют условиям  [x,1]");
+                double[,] errorMatrix = new double[,] { { -1 } };
+                return errorMatrix;
+            }
+        }
+        private double [,] transposedMatrix(double [,] aMatrix)
+        {
+            int aX, aY;
+            aX = aMatrix.GetLength(0);
+            aY = aMatrix.GetLength(1);
+            double[,] transposedMatrix = new double[aY, aX];
+            for (int tX = 0; tX < aY; tX++)
+            {
+                for ( int tY = 0; tY < aX; tY++)
+                {
+                    transposedMatrix[tX, tY] = aMatrix[tY, tX];
+                }
+            }
+            return transposedMatrix;
+        }
+        private void check(double [,] yMatrix, double [,] yCalculated ,
+                        double [,] xMatrix, double[,] bMatrix, double[,]  inverseMatrix)
+        {
+            double qDiff =qDifference(yMatrix, yCalculated);
+            double s2 = ((1.0 / (rowCount - columnCount - 1)) * qDiff);
+            double qR = sumSquar(yCalculated);
+            //F-критерий
+            double fObserved = ((rowCount - columnCount - 1) * qR) 
+                                    / ((columnCount + 1) * qDiff);
+            double[,] vB = multiplicationMatrix(s2, inverseMatrix);
+        }
+
+        private double sumSquar(double [,] matrix)
+        {
+            if (matrix.GetLength(1) == 1)
+            {
+                int size = matrix.GetLength(0);
+                double sum = 0;
+                for (int i=0;i<size; i++)
+                {
+                    sum += Math.Pow(matrix[i, 0], 2);
+                }
+                return sum;
+            }
+            else
+            {
+                MessageBox.Show("Матрица не явдяется вектором [x,1]");
+                Console.ReadKey(true);
+                return -1;
+            }
+        }
+        private double qDifference(double [,] y, double[,] yCalculated)
+        {
+            if ((y.GetLength(0)== yCalculated.GetLength(0))
+                    &&( y.GetLength(1)== yCalculated.GetLength(1)) && (y.GetLength(1) == 1))
+            {
+                double q = 0;
+                int size = y.GetLength(0);
+                for (int i = 0; i < size; i++)
+                {
+                    q += Math.Pow((y[i, 0] - yCalculated[i, 0]), 2);
+                }
+                return q;
+            }
+            else
+            {
+                MessageBox.Show("Матрицы не равных размеров");
+                return -1;
+            }
+            
+        }
+
+        //если второй параметр сделать отрицательным получим вычитание
+        private double[,] sumMatrix(double[,]firstMatrix, double[,] secondMatrix)
+        {
+            if ((firstMatrix.GetLength(0)==secondMatrix.GetLength(0))
+                    && (firstMatrix.GetLength(1) == secondMatrix.GetLength(1)))
+            {
+                int xSize = firstMatrix.GetLength(0);
+                int ySize = firstMatrix.GetLength(1);
+                double[,] sumMatrix = new double[xSize, ySize];
+                for(int x = 0; x < xSize; x++)
+                {
+                    for (int y = 0; y < ySize; y++)
+                    {
+                        sumMatrix[x, y] = firstMatrix[x, y] + secondMatrix[x, y];
+                    }
+                }
+                return sumMatrix;
+            }
+            else
+            {
+                MessageBox.Show("Матрицы не равных размеров");
+                double[,] errorMatrix = new double[,] { { -1 } };
+                return errorMatrix;
+            }
+        }
+        private double[,] multiplicationMatrix(double factor, double[,] aMatrix)
+        {
+            int xSize = aMatrix.GetLength(0);
+            int ySize = aMatrix.GetLength(1);
+            double [,] bMatrix = new double [xSize, ySize] ;
+            for (int x = 0; x < xSize; x++)
+            {
+                for (int y = 0; y < ySize; y++)
+                {
+                    bMatrix[x, y] = aMatrix[x, y] * factor;
+                }
+            }
+            return bMatrix;
+        }
         private double [,] multiplicationMatrix(double [,] aMatrix, double [,] bMatrix)
         {
             int m, n, p;
@@ -311,8 +508,9 @@ namespace _1labMethod
             }
             else
             {
-                MessageBox.Show("Матрица не является квадратной");
-                double[,] errorMatrix = new double[,] { { -1 }, { -1 } };
+                MessageBox.Show("Матрицы не могут быть перемножены {multiplicationMatrix}");
+                //Console.ReadKey(true);
+                double[,] errorMatrix = new double[,] { { -1 } };
                 return errorMatrix;
             }
         }
